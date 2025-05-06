@@ -63,7 +63,7 @@ extension ImagesListViewController: UITableViewDataSource {
             return
         }
 
-        let isLiked = indexPath.row % 2 == 0 ? true : false
+        let isLiked = indexPath.row % 2 == 0
 
         let cellData = ImagesListCellModel(
             image: image,
@@ -89,7 +89,7 @@ extension ImagesListViewController: UITableViewDelegate {
 
         let imageViewWidth = tableView.bounds.width
         let imageWidth = image.size.width
-        let scale = imageViewWidth / imageWidth
+        let scale = (imageWidth != 0) ? imageViewWidth / imageWidth : 0
         let cellHeight = image.size.height * scale
 
         return cellHeight
