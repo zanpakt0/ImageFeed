@@ -8,90 +8,70 @@
 import UIKit
 
 final class ImagesListViewController: UIViewController {
-    // MARK: PROPERTIES
 
-    private let imagesListView = ImagesListView()
+    @IBOutlet private var tableView: UITableView!
 
     private let photosName: [String] = Array(0..<20).map{ "\($0)" }
 
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
-        formatter.timeStyle = .none
+        formatter .timeStyle = .none
         return formatter
     }()
 
-    // MARK: - Lifecycle
-
     override func viewDidLoad() {
         super.viewDidLoad()
-        view = imagesListView
 
-        imagesListView.tableView.dataSource = self
-        imagesListView.tableView.delegate = self
-
-        imagesListView.tableView.rowHeight = 200
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 200
+        tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
     }
 
-    // MARK: - SETUP
+    func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
+        let imageName = photosName[indexPath.row]
+
+        guard let image = UIImage(named: imageName) else {
+            return
+        }
+
+        let currentDate = Date()
+
+        let isEvenIndex = indexPath.row % 2 == 0
+        let model = ImagesListCellModel(ImageView: image, Label: dateFormatter.string(from: currentDate), likeButton: isEvenIndex)
+        cell.configure(with: model)
+    }
 }
 
-// MARK: UITableViewDataSource
-
 extension ImagesListViewController: UITableViewDataSource {
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        photosName.count
+        return photosName.count
     }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(
-            withIdentifier: ImagesListCell.reuseIdentifier,
-            for: indexPath
-        )
+    func tableView (_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath)
 
         guard let imageListCell = cell as? ImagesListCell else {
             return UITableViewCell()
         }
 
         configCell(for: imageListCell, with: indexPath)
-
         return imageListCell
-    }
-
-    func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        guard let image = UIImage(named: photosName[indexPath.row]) else {
-            return
-        }
-
-        let isLiked = indexPath.row % 2 == 0
-
-        let cellData = ImagesListCellModel(
-            image: image,
-            date: dateFormatter.string(from: Date()),
-            isLiked: isLiked
-        )
-
-        cell.setupCell(with: cellData)
     }
 }
 
-// MARK: UITableViewDelegate
-
 extension ImagesListViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-
-    }
-
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        guard let image = UIImage(named: photosName[indexPath.row]) else {
-            return 0
+    internal func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        let imageName = photosName[indexPath.row]
+        guard let image = UIImage(named: imageName) else {
+            return 200
         }
+        let tableViewWidth = tableView.bounds.width
+        let aspectRatio = image.size.height / image.size.width
+        let imageViewHight = tableViewWidth * aspectRatio
+        let padding: CGFloat = 24
 
-        let imageViewWidth = tableView.bounds.width
-        let imageWidth = image.size.width
-        let scale = (imageWidth != 0) ? imageViewWidth / imageWidth : 0
-        let cellHeight = image.size.height * scale
-
-        return cellHeight
+        return imageViewHight + padding
     }
 }
