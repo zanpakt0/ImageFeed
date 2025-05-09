@@ -12,7 +12,7 @@ final class ProfileViewController: UIViewController {
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(named: "Photo")
+        imageView.image = UIImage(resource: .photo)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         return imageView
@@ -23,7 +23,7 @@ final class ProfileViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "@ekaterina_nov"
         label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
-        label.textColor = UIColor(named: "YP Gray")
+        label.textColor = UIColor(resource: .ypGray)
         label.textAlignment = .left
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
@@ -34,7 +34,7 @@ final class ProfileViewController: UIViewController {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "Екатерина Новикова"
-        label.textColor = UIColor(named: "YP White")
+        label.textColor = UIColor(resource: .ypWhite)
         label.font = UIFont.systemFont(ofSize: 23, weight: .bold)
         label.textAlignment = .left
 
@@ -52,7 +52,7 @@ final class ProfileViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "Hello, world!"
         label.font = UIFont.systemFont( ofSize: 13, weight: .regular)
-        label.textColor = UIColor(named: "YP White")
+        label.textColor = UIColor(resource: .ypWhite)
 
         return label
     }()
@@ -61,14 +61,14 @@ final class ProfileViewController: UIViewController {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setImage(UIImage(named: "Exit"), for: .normal)
-        button.tintColor = UIColor(named: "YP Red")
+        button.tintColor = UIColor(resource: .ypRed)
         button.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
         return button
     }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(named: "YP Black")
+        view.backgroundColor = UIColor(resource: .ypBlack)
         setupLayout()
     }
 

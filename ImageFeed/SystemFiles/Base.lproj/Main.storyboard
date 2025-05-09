@@ -68,8 +68,8 @@
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" name="YP Black"/>
                                         <connections>
-                                            <outlet property="ImageView" destination="cgp-20-0Kj" id="8Gv-uM-xMH"/>
                                             <outlet property="dateLabel" destination="vBG-FS-Cby" id="1A8-4B-2tM"/>
+                                            <outlet property="imagesView" destination="cgp-20-0Kj" id="PRE-Qc-AXA"/>
                                             <outlet property="likeButton" destination="C7n-RG-ksx" id="BKP-uy-pj0"/>
                                         </connections>
                                     </tableViewCell>

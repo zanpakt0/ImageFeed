@@ -72,7 +72,7 @@ extension ImagesListViewController {
         }
 
         let date = dateFormatter.string(from: Date())
-                let isLiked = indexPath.row % 2 == 0
+        let isLiked = indexPath.row % 2 == 0
 
         let model = ImagesListCellModel(image: image, date: date, isLiked: isLiked)
 
