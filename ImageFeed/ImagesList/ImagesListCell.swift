@@ -11,14 +11,14 @@ final class ImagesListCell: UITableViewCell {
 
     @IBOutlet private weak var ImageView: UIImageView!
 
-    @IBOutlet private weak var Label: UILabel!
+    @IBOutlet private weak var dateLabel: UILabel!
 
     @IBOutlet private weak var likeButton: UIButton!
 
     func configure(with model: ImagesListCellModel) {
-        ImageView.image = model.ImageView
-        Label.text = model.Label
-        let likeImageName = model.likeButton ? "HeartActive" : "HeartNoActive"
+        ImageView.image = model.image
+        dateLabel.text = model.date
+        let likeImageName = model.isLiked ? "HeartActive" : "HeartNoActive"
         likeButton.setImage(UIImage(named: likeImageName), for: .normal)
     }
 
