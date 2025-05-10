@@ -8,17 +8,16 @@
 import UIKit
 
 final class ImagesListViewController: UIViewController {
-
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
 
     @IBOutlet private var tableView: UITableView!
 
-    private let photosName: [String] = Array(0..<20).map{ "\($0)" }
+    private let photosName: [String] = Array(0..<20).map { "\($0)" }
 
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
-        formatter .timeStyle = .none
+        formatter.timeStyle = .none
         return formatter
     }()
 
@@ -31,10 +30,8 @@ final class ImagesListViewController: UIViewController {
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
-            guard
-                let viewController = segue.destination as? SingleImageViewController,
-                let indexPath = sender as? IndexPath
-            else {
+            guard let viewController = segue.destination as? SingleImageViewController,
+                  let indexPath = sender as? IndexPath else {
                 assertionFailure("Invalid segue destination")
                 return
             }
@@ -48,8 +45,8 @@ final class ImagesListViewController: UIViewController {
 }
 
 extension ImagesListViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return photosName.count
+    func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
+        photosName.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -72,17 +69,16 @@ extension ImagesListViewController {
         }
 
         let date = dateFormatter.string(from: Date())
-                let isLiked = indexPath.row % 2 == 0
+        let isLiked = indexPath.row % 2 == 0
 
-                let model = ImagesListCellModel(image: image, date: date, isLiked: isLiked)
+        let model = ImagesListCellModel(image: image, date: date, isLiked: isLiked)
 
-                cell.configure(with: model)
-
+        cell.configure(with: model)
     }
 }
 
 extension ImagesListViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
 
