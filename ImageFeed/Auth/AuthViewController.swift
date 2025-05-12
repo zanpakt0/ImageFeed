@@ -9,7 +9,7 @@ final class AuthViewController: UIViewController {
     weak var delegate: AuthViewControllerDelegate?
     let oauth2Service = OAuth2Service.shared
 
-    @IBAction func loginButoonTapped(_: UIButton) {
+    @IBAction private func loginButoonTapped(_: UIButton) {
         performSegue(withIdentifier: "showWebView", sender: nil)
     }
 
@@ -27,7 +27,7 @@ final class AuthViewController: UIViewController {
 
     private func configureBackButton() {
         navigationController?.navigationBar.backIndicatorImage = UIImage(resource: .navBackButton)
-        navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "nav_back_button")
+        navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(resource: .navBackButton)
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem?.tintColor = UIColor(resource: .ypBlack)
     }

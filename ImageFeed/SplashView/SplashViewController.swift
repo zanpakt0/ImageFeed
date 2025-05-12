@@ -71,24 +71,24 @@ final class SplashViewController: UIViewController {
                 fatalError("Invalid Configuration")
             }
 
-            guard let tabBarController = UIStoryboard(name: "Main", bundle: .main)
-                .instantiateViewController(withIdentifier: "TabBarController") as? TabBarController else {
-                fatalError("Unable to instantiate TabBarController")
+            let storyboard = UIStoryboard(name: "Main", bundle: .main)
+            if let tabBarController = storyboard.instantiateViewController(withIdentifier: "TabBarController") as? TabBarController {
+                window.rootViewController = tabBarController
+            } else {
+                self.showAlert(with: "Ошибка", message: "Не удалось загрузить главный экран")
             }
-
-            window.rootViewController = tabBarController
         }
     }
 
     private func showAuthViewController() {
         let storyboard = UIStoryboard(name: "Main", bundle: .main)
-        guard let authViewController = storyboard.instantiateViewController(withIdentifier: "AuthViewController") as? AuthViewController else {
-            fatalError("AuthViewController not found in storyboard")
+        if let authViewController = storyboard.instantiateViewController(withIdentifier: "AuthViewController") as? AuthViewController {
+            authViewController.delegate = self
+            authViewController.modalPresentationStyle = .fullScreen
+            present(authViewController, animated: true)
+        } else {
+            showAlert(with: "Ошибка", message: "AuthViewController не найден")
         }
-
-        authViewController.delegate = self
-        authViewController.modalPresentationStyle = .fullScreen
-        present(authViewController, animated: true)
     }
 
     private func showAlert(with title: String, message: String) {
