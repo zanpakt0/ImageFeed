@@ -71,8 +71,10 @@ final class SplashViewController: UIViewController {
                 fatalError("Invalid Configuration")
             }
 
-            let tabBarController = UIStoryboard(name: "Main", bundle: .main)
-                .instantiateViewController(withIdentifier: "TabBarController") as! TabBarController
+            guard let tabBarController = UIStoryboard(name: "Main", bundle: .main)
+                .instantiateViewController(withIdentifier: "TabBarController") as? TabBarController else {
+                fatalError("Unable to instantiate TabBarController")
+            }
 
             window.rootViewController = tabBarController
         }

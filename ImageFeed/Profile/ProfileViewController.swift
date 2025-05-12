@@ -93,7 +93,7 @@ final class ProfileViewController: UIViewController {
 
         let path = UIBezierPath(
             roundedRect: avatarImageView.bounds,
-            byRoundingCorners: [.topLeft],
+            byRoundingCorners: [.topLeft, .topRight, .bottomLeft, .bottomRight],
             cornerRadii: CGSize(width: 61, height: 61)
         )
         let mask = CAShapeLayer()
