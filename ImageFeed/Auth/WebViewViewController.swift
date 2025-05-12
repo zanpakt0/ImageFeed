@@ -1,5 +1,5 @@
 import UIKit
-import WebKit
+@preconcurrency import WebKit
 
 enum WebViewConstants {
     static let unsplashAuthorizeURLString = "https://unsplash.com/oauth/authorize"
@@ -19,6 +19,10 @@ final class WebViewViewController: UIViewController {
 
     @IBOutlet var progressView: UIProgressView!
 
+    // MARK: - KVO Observation
+
+    private var estimatedProgressObservation: NSKeyValueObservation?
+
     // MARK: - Overrides Methods
 
     override func viewDidLoad() {
@@ -28,30 +32,18 @@ final class WebViewViewController: UIViewController {
 
         webView.navigationDelegate = self
 
-        webView.addObserver(
-            self,
-            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-            options: .new,
-            context: nil
+        estimatedProgressObservation = webView.observe(
+            \.estimatedProgress,
+            options: [],
+            changeHandler: { [weak self] _, _ in
+                self?.updateProgress()
+            }
         )
-    }
-
-    override func observeValue(
-        forKeyPath keyPath: String?,
-        of object: Any?,
-        change: [NSKeyValueChangeKey: Any]?,
-        context: UnsafeMutableRawPointer?
-    ) {
-        if keyPath == #keyPath(WKWebView.estimatedProgress) {
-            updateProgress()
-        } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
+        estimatedProgressObservation = nil
     }
 
     // MARK: - Private Methods
@@ -75,11 +67,6 @@ final class WebViewViewController: UIViewController {
         }
 
         let request = URLRequest(url: url)
-        guard let webView else {
-            print("webView не инициализирован")
-            return
-        }
-
         webView.load(request)
     }
 

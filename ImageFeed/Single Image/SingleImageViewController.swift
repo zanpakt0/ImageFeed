@@ -1,31 +1,24 @@
-//
-//  SingleImageViewController.swift
-//  ImageFeed
-//
-//  Created by Zhukov Konstantin on 09.05.2025.
-//
-
 import UIKit
 
 final class SingleImageViewController: UIViewController {
-
     var image: UIImage? {
         didSet {
-            guard isViewLoaded,  let image else { return }
+            guard isViewLoaded, let image else {
+                return
+            }
             imageView.image = image
             imageView.frame.size = image.size
             rescaleAndCenterImageInScrollView(image: image)
-
         }
     }
 
-    //MARK: Outlets
+    // MARK: Outlets
 
-    @IBOutlet private weak var imageView: UIImageView!
+    @IBOutlet private var imageView: UIImageView!
 
-    @IBOutlet private weak var scrollView: UIScrollView!
+    @IBOutlet private var scrollView: UIScrollView!
 
-    //MARK: viewDidLoad
+    // MARK: viewDidLoad
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,19 +26,22 @@ final class SingleImageViewController: UIViewController {
         scrollView.maximumZoomScale = 1.25
         scrollView.delegate = self
 
-        guard let image else { return }
+        guard let image else {
+            return
+        }
         imageView.image = image
         imageView.frame.size = image.size
         rescaleAndCenterImageInScrollView(image: image)
     }
 
-    @IBAction private func didTapBackButton(_ sender: Any) {
+    @IBAction private func didTapBackButton(_: Any) {
         dismiss(animated: true, completion: nil)
     }
 
-
-    @IBAction private func didTapShareButton(_ sender: UIButton) {
-        guard let image else { return }
+    @IBAction private func didTapShareButton(_: UIButton) {
+        guard let image else {
+            return
+        }
         let share = UIActivityViewController(
             activityItems: [image],
             applicationActivities: nil
@@ -53,14 +49,14 @@ final class SingleImageViewController: UIViewController {
         present(share, animated: true, completion: nil)
     }
 
-
     private func updateImageViewSize() {
-        guard let image = image else { return }
+        guard let image else {
+            return
+        }
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.widthAnchor.constraint(equalToConstant: image.size.width).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: image.size.height).isActive = true
     }
-
 
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
         let minZoomScale = scrollView.minimumZoomScale
@@ -75,17 +71,16 @@ final class SingleImageViewController: UIViewController {
 
         scrollView.setZoomScale(scale, animated: false)
 
-            let newContentSize = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
-            let horizontalInset = max(0, (visibleRectSize.width - newContentSize.width) / 2)
-            let verticalInset = max(0, (visibleRectSize.height - newContentSize.height) / 2)
-
+        let newContentSize = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+        let horizontalInset = max(0, (visibleRectSize.width - newContentSize.width) / 2)
+        let verticalInset = max(0, (visibleRectSize.height - newContentSize.height) / 2)
 
         scrollView.contentInset = UIEdgeInsets(top: verticalInset, left: horizontalInset, bottom: verticalInset, right: horizontalInset)
     }
 }
 
 extension SingleImageViewController: UIScrollViewDelegate {
-    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+    func viewForZooming(in _: UIScrollView) -> UIView? {
         imageView
     }
 }

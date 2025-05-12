@@ -1,13 +1,10 @@
-//
-//  ProfileViewController.swift
-//  ImageFeed
-//
-//  Created by Zhukov Konstantin on 09.05.2025.
-//
-
+import Foundation
+import Kingfisher
 import UIKit
 
 final class ProfileViewController: UIViewController {
+    private var profileImageServiceObserver: NSObjectProtocol?
+    var profileService = ProfileService.shared
 
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
@@ -21,7 +18,7 @@ final class ProfileViewController: UIViewController {
     private lazy var loginNameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "@ekaterina_nov"
+        label.text = profileService.currentProfile?.loginName
         label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.textColor = UIColor(resource: .ypGray)
         label.textAlignment = .left
@@ -33,9 +30,8 @@ final class ProfileViewController: UIViewController {
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Екатерина Новикова"
+        label.text = profileService.currentProfile?.name
         label.textColor = UIColor(resource: .ypWhite)
-        label.font = UIFont.systemFont(ofSize: 23, weight: .bold)
         label.textAlignment = .left
 
         let attributes: [NSAttributedString.Key: Any] = [
@@ -43,15 +39,15 @@ final class ProfileViewController: UIViewController {
             .kern: -0.078
         ]
 
-        label.attributedText = NSAttributedString(string: "Екатерина Новикова", attributes: attributes)
+        label.attributedText = NSAttributedString(string: profileService.currentProfile?.name ?? "", attributes: attributes)
         return label
     }()
 
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Hello, world!"
-        label.font = UIFont.systemFont( ofSize: 13, weight: .regular)
+        label.text = profileService.currentProfile?.bio
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.textColor = UIColor(resource: .ypWhite)
 
         return label
@@ -60,27 +56,94 @@ final class ProfileViewController: UIViewController {
     private lazy var logoutButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setImage(UIImage(named: "Exit"), for: .normal)
+        button.setImage(UIImage(resource: .exit), for: .normal)
         button.tintColor = UIColor(resource: .ypRed)
         button.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
         return button
     }()
 
+    // MARK: - Initializers
+
+    override init(nibName: String?, bundle: Bundle?) {
+        super.init(nibName: nibName, bundle: bundle)
+        addObserver()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        addObserver()
+    }
+
+    deinit {
+        removeObserver()
+    }
+
+    // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .ypBlack)
         setupLayout()
+        fetchProfileData()
+        updateAvatar()
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        let path = UIBezierPath(roundedRect: avatarImageView.bounds,
-                                byRoundingCorners: [.topLeft],
-                                cornerRadii: CGSize(width: 61, height: 61))
+        let path = UIBezierPath(
+            roundedRect: avatarImageView.bounds,
+            byRoundingCorners: [.topLeft],
+            cornerRadii: CGSize(width: 61, height: 61)
+        )
         let mask = CAShapeLayer()
         mask.path = path.cgPath
         avatarImageView.layer.mask = mask
+    }
+
+    // MARK: - Notification Observers
+
+    private func addObserver() {
+        profileImageServiceObserver = NotificationCenter.default.addObserver(
+            forName: ProfileImageService.didChangeNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+                guard let self = self else { return }
+                self.updateAvatar()
+            }
+    }
+
+    @objc private func updateAvatar() {
+        guard let profileImageURL = ProfileImageService.shared.avatarURL,
+              let url = URL(string: profileImageURL)
+        else { print("Неверный или пустой URL аватара")
+            return
+        }
+
+        let processor = RoundCornerImageProcessor(cornerRadius: 20)
+
+        avatarImageView.kf.setImage(
+            with: url,
+            placeholder: UIImage(resource: .photo),
+            options: [
+                .transition(.fade(0.3)),
+                .cacheOriginalImage,
+                .processor(processor)
+            ]
+        ) { result in
+            switch result {
+            case .success:
+                print("Аватарка успешно обновлена!")
+            case let .failure(error):
+                print("Ошибка загрузки аватарки: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func removeObserver() {
+        if let observer = profileImageServiceObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     private func setupLayout() {
@@ -91,7 +154,6 @@ final class ProfileViewController: UIViewController {
         view.addSubview(logoutButton)
 
         NSLayoutConstraint.activate([
-            // Avatar ImageView
             avatarImageView.widthAnchor.constraint(equalToConstant: 70),
             avatarImageView.heightAnchor.constraint(equalToConstant: 70),
             avatarImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
@@ -115,5 +177,29 @@ final class ProfileViewController: UIViewController {
 
     @objc private func didTapLogoutButton() {
         print("Logout tapped, will be implemented later")
+    }
+
+    private func fetchProfileData() {
+        guard let token = OAuth2TokenStorage().token else {
+            print("Ошибка: токен отсутствует")
+            return
+        }
+
+        profileService.fetchProfile(token) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case let .success(profile):
+                    self?.updateProfileUI(with: profile)
+                case let .failure(error):
+                    print("Ошибка загрузки профиля: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func updateProfileUI(with profile: Profile) {
+        nameLabel.text = profile.name
+        loginNameLabel.text = profile.loginName
+        descriptionLabel.text = profile.bio ?? "No bio available"
     }
 }

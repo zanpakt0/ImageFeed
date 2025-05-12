@@ -1,10 +1,3 @@
-//
-//  Constants.swift.swift
-//  ImageFeed
-//
-//  Created by Zhukov Konstantin on 10.05.2025.
-//
-
 import Foundation
 
 enum Constants {
@@ -14,7 +7,7 @@ enum Constants {
     static let accessScope = "public+read_user+write_likes"
 
     static let defaultBaseURL: URL = {
-        guard let url = URL (string: "https://api.unsplash.com") else {
+        guard let url = URL(string: "https://api.unsplash.com") else {
             fatalError("Invalid URL for defaultBaseURL")
         }
         return url
