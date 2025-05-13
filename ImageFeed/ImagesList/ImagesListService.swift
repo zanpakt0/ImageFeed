@@ -3,6 +3,7 @@ import Foundation
 final class ImagesListService {
     static let didChangeNotification = Notification.Name(rawValue: "ImagesListServiceDidChange")
     static let shared = ImagesListService()
+    static let dateFormatter = ISO8601DateFormatter()
 
     private(set) var photos: [Photo] = []
     private var isLoading = false
@@ -155,7 +156,7 @@ final class ImagesListService {
 
     private func convertToPhoto(from result: PhotoResult) -> Photo {
         let size = CGSize(width: result.width, height: result.height)
-        let createdAt = result.createdAt.flatMap { ISO8601DateFormatter().date(from: $0) } ?? Date()
+        let createdAt = result.createdAt.flatMap { ImagesListService.dateFormatter.date(from: $0) } ?? Date()
         return Photo(
             id: result.id,
             size: size,
