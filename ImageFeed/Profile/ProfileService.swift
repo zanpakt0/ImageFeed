@@ -1,28 +1,5 @@
 import Foundation
 
-struct ProfileResult: Codable {
-    let id: String
-    let username: String
-    let firstName: String?
-    let lastName: String?
-    let bio: String?
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case username
-        case firstName = "first_name"
-        case lastName = "last_name"
-        case bio
-    }
-}
-
-struct Profile {
-    let username: String
-    let name: String
-    let loginName: String
-    let bio: String?
-}
-
 final class ProfileService {
     static let shared = ProfileService()
     private init() {}
@@ -30,6 +7,8 @@ final class ProfileService {
 
     private var activeRequest = false
     private let queue = DispatchQueue(label: "ProfileServiceQueue", attributes: .concurrent)
+
+    var profile: Profile?
 
     func fetchProfile(_ token: String, completion: @escaping (Result<Profile, Error>) -> Void) {
         queue.async(flags: .barrier) {
@@ -85,6 +64,10 @@ final class ProfileService {
         }
 
         task.resume()
+    }
+
+    func clean() {
+        profile = nil
     }
 
     private func decodeProfile(from data: Data) throws -> Profile {

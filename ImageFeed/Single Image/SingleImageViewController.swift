@@ -1,6 +1,9 @@
+import ProgressHUD
 import UIKit
 
 final class SingleImageViewController: UIViewController {
+    var imageURL: URL?
+
     var image: UIImage? {
         didSet {
             guard isViewLoaded, let image else {
@@ -14,9 +17,9 @@ final class SingleImageViewController: UIViewController {
 
     // MARK: Outlets
 
-    @IBOutlet private var imageView: UIImageView!
+    @IBOutlet var imageView: UIImageView!
 
-    @IBOutlet private var scrollView: UIScrollView!
+    @IBOutlet var scrollView: UIScrollView!
 
     // MARK: viewDidLoad
 
@@ -26,12 +29,15 @@ final class SingleImageViewController: UIViewController {
         scrollView.maximumZoomScale = 1.25
         scrollView.delegate = self
 
+        loadImage()
+
         guard let image else {
             return
         }
         imageView.image = image
         imageView.frame.size = image.size
         rescaleAndCenterImageInScrollView(image: image)
+        updateImageViewSize()
     }
 
     @IBAction private func didTapBackButton(_: Any) {
@@ -49,6 +55,28 @@ final class SingleImageViewController: UIViewController {
         present(share, animated: true, completion: nil)
     }
 
+    private func loadImage() {
+        guard let imageURL else {
+            return
+        }
+
+        UIBlockingProgressHUD.show()
+        
+        imageView.kf.setImage(with: imageURL) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            guard let self else {
+                return
+            }
+
+            switch result {
+            case let .success(imageResult):
+                image = imageResult.image // Устанавливаем изображение
+            case .failure:
+                showError() // Показываем алерт при ошибке
+            }
+        }
+    }
+
     private func updateImageViewSize() {
         guard let image else {
             return
@@ -56,6 +84,25 @@ final class SingleImageViewController: UIViewController {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.widthAnchor.constraint(equalToConstant: image.size.width).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: image.size.height).isActive = true
+    }
+
+    private func showError() {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Попробовать ещё раз?",
+            preferredStyle: .alert
+        )
+
+        let retryAction = UIAlertAction(title: "Повторить", style: .default) { _ in
+            self.loadImage() // Повторяем загрузку
+        }
+
+        let cancelAction = UIAlertAction(title: "Не надо", style: .cancel)
+
+        alert.addAction(retryAction)
+        alert.addAction(cancelAction)
+
+        present(alert, animated: true)
     }
 
     private func rescaleAndCenterImageInScrollView(image: UIImage) {

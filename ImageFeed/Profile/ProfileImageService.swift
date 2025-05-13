@@ -21,6 +21,10 @@ final class ProfileImageService {
         let small: String
     }
 
+    func clearAvatar() {
+        self.avatarURL = nil
+    }
+
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
         guard lastUsername != username else {
             return
@@ -29,10 +33,7 @@ final class ProfileImageService {
 
         lastUsername = username
 
-        guard let url = URL(string: "\(Constants.defaultBaseURL)/users/\(username)") else {
-            completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
-            return
-        }
+        let url = Constants.userProfileURL(for: username)
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
