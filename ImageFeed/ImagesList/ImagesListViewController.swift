@@ -8,10 +8,10 @@ protocol ImagesListViewControllerProtocol: AnyObject {
     func updateTableView(oldCount: Int)
 }
 
-final class ImagesListViewController: UIViewController, ImagesListViewControllerProtocol {
+public class ImagesListViewController: UIViewController, ImagesListViewControllerProtocol {
     @IBOutlet private var tableView: UITableView!
 
-    var presenter = ImagesListPresenter()
+    var presenter: ImagesListPresenterProtocol = ImagesListPresenter()
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
     private var imageListObserver: NSObjectProtocol?
 
@@ -22,7 +22,7 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
         return formatter
     }()
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
@@ -52,7 +52,7 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
         }
     }
 
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    public override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
             guard let viewController = segue.destination as? SingleImageViewController,
                   let indexPath = sender as? IndexPath else {
@@ -67,11 +67,11 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
 }
 
 extension ImagesListViewController: UITableViewDataSource {
-    func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
+    public func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
         presenter.photos.count
     }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath)
 
         guard let imageListCell = cell as? ImagesListCell else {
@@ -98,11 +98,11 @@ extension ImagesListViewController {
 }
 
 extension ImagesListViewController: UITableViewDelegate {
-    func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
+    public func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
 
-    func tableView(_: UITableView, willDisplay _: UITableViewCell, forRowAt indexPath: IndexPath) {
+    public func tableView(_: UITableView, willDisplay _: UITableViewCell, forRowAt indexPath: IndexPath) {
         if indexPath.row == presenter.photos.count - 1 {
             presenter.willDisplayCell(at: indexPath)
         }
@@ -117,7 +117,7 @@ extension ImagesListViewController: ImagesListCellDelegate {
         presenter.didTapLike(at: indexPath)
     }
 
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         let photo = presenter.photos[indexPath.row]
 
         let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)

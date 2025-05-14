@@ -11,7 +11,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
     var profileService = ProfileService.shared
     var presenter: ProfilePresenterProtocol?
 
-    init(presenter: ProfilePresenter) {
+    init(presenter: ProfilePresenterProtocol) {
         self.presenter = presenter
         super.init(nibName: nil, bundle: nil)
     }
@@ -25,7 +25,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         self.presenter?.view = self
     }
 
-    private lazy var avatarImageView: UIImageView = {
+    public lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = UIImage(resource: .placeholder)
@@ -35,7 +35,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         return imageView
     }()
 
-    private lazy var loginNameLabel: UILabel = {
+    public lazy var loginNameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = profileService.currentProfile?.loginName
@@ -47,7 +47,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         return label
     }()
 
-    private lazy var nameLabel: UILabel = {
+    public lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = profileService.currentProfile?.name
@@ -63,7 +63,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         return label
     }()
 
-    private lazy var descriptionLabel: UILabel = {
+    public lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = profileService.currentProfile?.bio
@@ -175,8 +175,8 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         ])
     }
 
-    @objc private func didTapLogoutButton() {
-        showLogoutAlert()
+    @objc public func didTapLogoutButton() {
+        presenter?.didTapLogout()
     }
 
      func showLogoutAlert() {
