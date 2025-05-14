@@ -9,9 +9,3 @@ public struct Photo {
     let largeImageURL: String
     var isLiked: Bool
 }
-
-
-
-
-
-

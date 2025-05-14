@@ -9,6 +9,7 @@ enum Constants {
     static let photosURL = defaultBaseURL.appendingPathComponent(photosPath)
     static let userProfilePath = "/users"
     static let authPath = "/oauth/authorize"
+    static let likePath = "/like"
     static let authURL = "https://unsplash.com\(authPath)"
 
     static func userProfileURL(for username: String) -> URL {

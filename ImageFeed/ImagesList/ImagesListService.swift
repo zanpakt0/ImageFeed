@@ -1,6 +1,12 @@
 import Foundation
 
-final class ImagesListService {
+protocol ImagesListServiceProtocol {
+    var photos: [Photo] { get }
+    func fetchPhotosNextPage()
+    func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void)
+}
+
+final class ImagesListService: ImagesListServiceProtocol {
     static let didChangeNotification = Notification.Name(rawValue: "ImagesListServiceDidChange")
     static let shared = ImagesListService()
     static let dateFormatter = ISO8601DateFormatter()
@@ -36,7 +42,7 @@ final class ImagesListService {
         isLoading = true
         currentPage += 1
 
-        guard var urlComponents = URLComponents(string: "https://api.unsplash.com/photos") else {
+        guard var urlComponents = URLComponents(string: "\(Constants.photosURL)") else {
             return
         }
         urlComponents.queryItems = [
@@ -78,6 +84,7 @@ final class ImagesListService {
                 let filteredPhotos = newPhotos.filter { newPhotos in
                     !self.photos.contains(where: { $0.id == newPhotos.id })
                 }
+                
                 DispatchQueue.main.async{
                     self.photos.append(contentsOf: filteredPhotos)
                     NotificationCenter.default.post(
@@ -98,7 +105,7 @@ final class ImagesListService {
             completion(.failure(NSError(domain: "ImagesListService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Токен не найден"])))
             return
         }
-        let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
+        let urlString = "\(Constants.photosURL)/\(photoId)\(Constants.likePath)"
         guard let url = URL(string: urlString) else {
             completion(.failure(NSError(domain: "ImagesListService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Некорректный URL"])))
             return
