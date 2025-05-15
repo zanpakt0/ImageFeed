@@ -2,12 +2,17 @@ import Kingfisher
 import ProgressHUD
 import UIKit
 
-final class ImagesListViewController: UIViewController {
+protocol ImagesListViewControllerProtocol: AnyObject {
+    func updateTableView()
+    func reloadCell(at indexPath: IndexPath)
+    func updateTableView(oldCount: Int)
+}
+
+public class ImagesListViewController: UIViewController, ImagesListViewControllerProtocol {
     @IBOutlet private var tableView: UITableView!
 
+    var presenter: ImagesListPresenterProtocol = ImagesListPresenter()
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
-    private let imagesListService = ImagesListService()
-    private var photos: [Photo] = []
     private var imageListObserver: NSObjectProtocol?
 
     private lazy var dateFormatter: DateFormatter = {
@@ -17,38 +22,37 @@ final class ImagesListViewController: UIViewController {
         return formatter
     }()
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
-        NotificationCenter.default.addObserver(
-            forName: ImagesListService.didChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.updateTableViewAnimated()
-        }
 
-        ImagesListService.shared.fetchPhotosNextPage()
+        presenter.view = self
+        presenter.viewDidLoad()
     }
 
-    private func updateTableViewAnimated() {
-        let oldCount = photos.count
-        let newCount = ImagesListService.shared.photos.count
+    func reloadCell(at indexPath: IndexPath) {
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
 
-        photos = ImagesListService.shared.photos
+    func updateTableView() {
+        tableView.reloadData()
+    }
 
-        if oldCount != newCount {
-            tableView.performBatchUpdates {
-                let indexPaths = (oldCount..<newCount).map { i in
-                    IndexPath(row: i, section: 0)
-                }
-                tableView.insertRows(at: indexPaths, with: .automatic)
-            } completion: { _ in }
+    func updateTableView(oldCount: Int) {
+        let newCount = presenter.photos.count
+        guard newCount > oldCount else {
+            return
+        }
+
+        let newIndexPaths = (oldCount..<newCount).map { IndexPath(row: $0, section: 0) }
+
+        tableView.performBatchUpdates {
+            tableView.insertRows(at: newIndexPaths, with: .automatic)
         }
     }
 
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    public override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
             guard let viewController = segue.destination as? SingleImageViewController,
                   let indexPath = sender as? IndexPath else {
@@ -56,20 +60,18 @@ final class ImagesListViewController: UIViewController {
                 return
             }
 
-            let photo = photos[indexPath.row]
+            let photo = presenter.photos[indexPath.row]
             viewController.imageURL = URL(string: photo.largeImageURL)
-        } else {
-            super.prepare(for: segue, sender: sender)
         }
     }
 }
 
 extension ImagesListViewController: UITableViewDataSource {
-    func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
-        photos.count
+    public func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
+        presenter.photos.count
     }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath)
 
         guard let imageListCell = cell as? ImagesListCell else {
@@ -83,7 +85,7 @@ extension ImagesListViewController: UITableViewDataSource {
 
 extension ImagesListViewController {
     func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let photo = photos[indexPath.row]
+        let photo = presenter.photos[indexPath.row]
 
         let url = URL(string: photo.thumbImageURL)
         cell.setImage(with: url)
@@ -96,23 +98,13 @@ extension ImagesListViewController {
 }
 
 extension ImagesListViewController: UITableViewDelegate {
-    func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
+    public func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
 
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let photo = photos[indexPath.row]
-
-        let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
-        let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
-        let scale = imageViewWidth / photo.size.width
-        let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
-        return cellHeight
-    }
-
-    func tableView(_: UITableView, willDisplay _: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == photos.count - 1 {
-            ImagesListService.shared.fetchPhotosNextPage()
+    public func tableView(_: UITableView, willDisplay _: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.row == presenter.photos.count - 1 {
+            presenter.willDisplayCell(at: indexPath)
         }
     }
 }
@@ -122,27 +114,16 @@ extension ImagesListViewController: ImagesListCellDelegate {
         guard let indexPath = tableView.indexPath(for: cell) else {
             return
         }
+        presenter.didTapLike(at: indexPath)
+    }
 
-        UIBlockingProgressHUD.show()
+    public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        let photo = presenter.photos[indexPath.row]
 
-        let photo = photos[indexPath.row]
-        ImagesListService.shared.changeLike(photoId: photo.id, isLike: !photo.isLiked) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success:
-                DispatchQueue.main.async {
-                    self.photos = ImagesListService.shared.photos
-                    cell.setIsLiked(self.photos[indexPath.row].isLiked)
-                    UIBlockingProgressHUD.dismiss()
-                }
-                case .failure(let error):
-                DispatchQueue.main.async {
-                    UIBlockingProgressHUD.dismiss()
-                    print("Ошибка при лайке \(error)")
-                    let alert = UIAlertController(title: "Ошибка", message: "Не удалось поставить лайк", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                }
-            }
-        }
+        let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
+        let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
+        let scale = imageViewWidth / photo.size.width
+        let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
+        return cellHeight
     }
 }

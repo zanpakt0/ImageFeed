@@ -1,14 +1,12 @@
 import ProgressHUD
 import UIKit
 
-/// Структура для парсинга ответа сервера
 struct OAuthTokenResponseBody: Decodable {
     let accessToken: String
     let tokenType: String
     let scope: String?
     let createdAt: Int
 
-    /// Используем ключи, чтобы соответствовать названиям в JSON
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
         case tokenType = "token_type"

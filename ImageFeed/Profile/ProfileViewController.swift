@@ -2,19 +2,40 @@ import Foundation
 import Kingfisher
 import UIKit
 
-final class ProfileViewController: UIViewController {
-    var profileService = ProfileService.shared
+protocol ProfileViewControllerProtocol: AnyObject {
+    func updateAvatar(with urlString: String)
+    func updateProfile(with profile: Profile)
+}
 
-    private lazy var avatarImageView: UIImageView = {
+final class ProfileViewController: UIViewController, ProfileViewControllerProtocol {
+    var profileService = ProfileService.shared
+    var presenter: ProfilePresenterProtocol?
+
+    init(presenter: ProfilePresenterProtocol) {
+        self.presenter = presenter
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable) required init?(coder _: NSCoder) {
+        fatalError("init(coder:) не поддерживается, используй init(presenter:)")
+    }
+
+    func configure(_ presenter: ProfilePresenterProtocol) {
+        self.presenter = presenter
+        self.presenter?.view = self
+    }
+
+    public lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(resource: .photo)
+        imageView.image = UIImage(resource: .placeholder)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 35
         return imageView
     }()
 
-    private lazy var loginNameLabel: UILabel = {
+    public lazy var loginNameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = profileService.currentProfile?.loginName
@@ -26,7 +47,7 @@ final class ProfileViewController: UIViewController {
         return label
     }()
 
-    private lazy var nameLabel: UILabel = {
+    public lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = profileService.currentProfile?.name
@@ -42,7 +63,7 @@ final class ProfileViewController: UIViewController {
         return label
     }()
 
-    private lazy var descriptionLabel: UILabel = {
+    public lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = profileService.currentProfile?.bio
@@ -61,47 +82,25 @@ final class ProfileViewController: UIViewController {
         return button
     }()
 
-    // MARK: - Initializers
-
-    override init(nibName: String?, bundle: Bundle?) {
-        super.init(nibName: nibName, bundle: bundle)
-        addObserver()
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        addObserver()
-    }
-
-    deinit {
-        removeObserver()
-    }
-
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .ypBlack)
         setupLayout()
-        fetchProfileData()
-        avatarImageView.layer.cornerRadius = 35
         avatarImageView.layer.masksToBounds = true
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-
-        let path = UIBezierPath(
-            roundedRect: avatarImageView.bounds,
-            byRoundingCorners: [.topLeft, .topRight, .bottomLeft, .bottomRight],
-            cornerRadii: CGSize(width: 61, height: 61)
-        )
-        let mask = CAShapeLayer()
-        mask.path = path.cgPath
-        avatarImageView.layer.mask = mask
+        assert(presenter != nil, "ProfilePresenter не был сконфигурирован")
+        presenter?.viewDidLoad()
+        addObserver()
     }
 
     // MARK: - Notification Observers
+
+    func updateProfile(with profile: Profile) {
+        nameLabel.text = profile.name
+        loginNameLabel.text = profile.loginName
+        descriptionLabel.text = profile.bio ?? "No bio available"
+    }
 
     private func addObserver() {
         NotificationCenter.default.addObserver(
@@ -122,7 +121,7 @@ final class ProfileViewController: UIViewController {
 
         avatarImageView.kf.setImage(
             with: url,
-            placeholder: UIImage(named: "placeholder"),
+            placeholder: UIImage(resource: .placeholder),
             options: [
                 .transition(.fade(0.3)),
                 .cacheOriginalImage
@@ -176,33 +175,12 @@ final class ProfileViewController: UIViewController {
         ])
     }
 
-    @objc private func didTapLogoutButton() {
-        showLogoutAlert()
+    @objc public func didTapLogoutButton() {
+        presenter?.didTapLogout()
     }
 
-    private func showLogoutAlert() {
+     func showLogoutAlert() {
         ProfileLogoutService.shared.showLogoutAlert(from: self)
-    }
-
-    private func fetchProfileData() {
-        guard let token = OAuth2TokenStorage().token else {
-            print("Ошибка: токен отсутствует")
-            return
-        }
-
-        profileService.fetchProfile(token) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case let .success(profile):
-                    self?.updateProfileUI(with: profile)
-
-                    self?.fetchProfileImageURL(for: profile.username)
-
-                case let .failure(error):
-                    print("Ошибка загрузки профиля: \(error.localizedDescription)")
-                }
-            }
-        }
     }
 
     private func updateProfileUI(with profile: Profile) {
@@ -228,7 +206,7 @@ final class ProfileViewController: UIViewController {
         }
     }
 
-    private func updateAvatar(with urlString: String) {
+    func updateAvatar(with urlString: String) {
         guard let url = URL(string: urlString) else {
             return
         }

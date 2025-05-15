@@ -61,7 +61,7 @@ final class SingleImageViewController: UIViewController {
         }
 
         UIBlockingProgressHUD.show()
-        
+
         imageView.kf.setImage(with: imageURL) { [weak self] result in
             UIBlockingProgressHUD.dismiss()
             guard let self else {
@@ -70,9 +70,9 @@ final class SingleImageViewController: UIViewController {
 
             switch result {
             case let .success(imageResult):
-                image = imageResult.image // Устанавливаем изображение
+                image = imageResult.image
             case .failure:
-                showError() // Показываем алерт при ошибке
+                showError()
             }
         }
     }
@@ -88,21 +88,13 @@ final class SingleImageViewController: UIViewController {
 
     private func showError() {
         let alert = UIAlertController(
-            title: "Что-то пошло не так",
-            message: "Попробовать ещё раз?",
+            title: "Что-то пошло не так(",
+            message: "Не удалось войти в систему",
             preferredStyle: .alert
         )
-
-        let retryAction = UIAlertAction(title: "Повторить", style: .default) { _ in
-            self.loadImage() // Повторяем загрузку
-        }
-
-        let cancelAction = UIAlertAction(title: "Не надо", style: .cancel)
-
-        alert.addAction(retryAction)
-        alert.addAction(cancelAction)
-
-        present(alert, animated: true)
+        let okAction = UIAlertAction(title: "Ок", style: .default, handler: nil)
+        alert.addAction(okAction)
+        present(alert, animated: true, completion: nil)
     }
 
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
